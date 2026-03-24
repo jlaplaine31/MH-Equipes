@@ -90,12 +90,11 @@ export async function createSession(data: {
     [SESSION_COLS.shareToken]: shareToken,
     [SESSION_COLS.status]: STATUS_VALUES.open,
   }
-  const created = await flowPost<Record<string, unknown>>(
-    `${TABLES.sessions}?$select=${SESSION_COLS.id}`,
-    body,
-  )
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sessionId = (created as any)?.[SESSION_COLS.id]
+  await flowPost(TABLES.sessions, body)
+
+  // POST returns 204 — fetch the created session by shareToken to get the ID
+  const created = await getSessionByToken(shareToken)
+  const sessionId = created?.id
 
   // Pre-create team slots
   if (sessionId) {
@@ -110,8 +109,8 @@ export async function createSession(data: {
     }
   }
 
-  return {
-    id: sessionId ?? `session-${Date.now()}`,
+  return created ?? {
+    id: `session-${Date.now()}`,
     organizerId: '', title, numTeams, services,
     shareToken, status: 'open', createdAt: new Date().toISOString(),
   }

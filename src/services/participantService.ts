@@ -71,15 +71,13 @@ export async function createParticipant(data: {
     [PARTICIPANT_COLS.sessionToken]: sessionToken,
     'aaa_Session@odata.bind': `/${TABLES.sessions}(${data.sessionId})`,
   }
-  const created = await flowPost<Record<string, unknown>>(
-    `${TABLES.participants}?$select=${PARTICIPANT_COLS.id}`,
-    body,
-  )
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const id = (created as any)?.[PARTICIPANT_COLS.id] ?? `p-${Date.now()}`
+  await flowPost(TABLES.participants, body)
 
-  return {
-    id, sessionId: data.sessionId, name: data.name, service: data.service,
+  // POST returns 204 — fetch the created participant by sessionToken
+  const created = await getParticipantByToken(sessionToken)
+
+  return created ?? {
+    id: `p-${Date.now()}`, sessionId: data.sessionId, name: data.name, service: data.service,
     scoreCopilot: data.scoreCopilot, scoreMia: data.scoreMia,
     sessionToken, teamId: null, createdAt: new Date().toISOString(),
   }
