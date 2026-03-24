@@ -6,7 +6,7 @@ import JoinPage from './pages/JoinPage'
 import EditPage from './pages/EditPage'
 import WaitingPage from './pages/WaitingPage'
 
-const BASE = '/equipes'
+const BASE = '/MH-Equipes'
 
 export default function App() {
   return (

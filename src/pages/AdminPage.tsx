@@ -29,7 +29,7 @@ export default function AdminPage() {
   }
 
   const effectiveNumTeams = numTeamsInput ?? session.numTeams
-  const joinUrl = `${window.location.origin}/equipes/join/${session.shareToken}`
+  const joinUrl = `${window.location.origin}/MH-Equipes/join/${session.shareToken}`
 
   const showQr = viewMode === 'both' || viewMode === 'qr'
   const showTeams = viewMode === 'both' || viewMode === 'teams'
