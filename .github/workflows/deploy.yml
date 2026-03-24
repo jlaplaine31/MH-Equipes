@@ -33,6 +33,7 @@ jobs:
           VITE_MSAL_AUTHORITY: ${{ vars.MSAL_AUTHORITY }}
           VITE_MSAL_REDIRECT_URI: ${{ vars.MSAL_REDIRECT_URI }}
           VITE_DATAVERSE_URL: ${{ vars.DATAVERSE_URL }}
+          VITE_FLOW_URL: ${{ vars.FLOW_URL }}
           VITE_USE_MOCK: ${{ vars.USE_MOCK || 'false' }}
 
       - uses: actions/upload-pages-artifact@v3
