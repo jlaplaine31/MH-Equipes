@@ -4,7 +4,12 @@ import { msalConfig } from './msalConfig'
 /**
  * Singleton MSAL PublicClientApplication instance.
  *
- * Import this wherever you need to interact with MSAL
- * (acquire tokens, check accounts, etc.).
+ * Only initialized if a client ID is configured.
+ * When using Power Automate as proxy, MSAL is not needed.
  */
-export const msalInstance = new PublicClientApplication(msalConfig)
+const clientId = import.meta.env.VITE_MSAL_CLIENT_ID as string | undefined
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const msalInstance: PublicClientApplication = clientId
+  ? new PublicClientApplication(msalConfig)
+  : (null as any)
