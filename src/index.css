@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@theme {
+  /* Couleurs accent */
+  --color-accent: #E2250C;
+  --color-accent-dark: #FF6B5A;
+
+  /* Fonds */
+  --color-surface-light: #F5F5F2;
+  --color-surface-dark: #1a1a1a;
+  --color-card-light: #ffffff;
+  --color-card-dark: #2a2a2a;
+
+  /* Texte */
+  --color-text-light: #1a1a1a;
+  --color-text-dark: #f0f0f0;
+  --color-muted-light: #6b7280;
+  --color-muted-dark: #9ca3af;
+
+  /* Bordures */
+  --color-border-light: #e5e7eb;
+  --color-border-dark: #3a3a3a;
+
+  /* Polices */
+  --font-sans: "Inter", sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+}
+
+/* Theme par defaut (clair) */
+:root {
+  --color-bg: var(--color-surface-light);
+  --color-card: var(--color-card-light);
+  --color-text: var(--color-text-light);
+  --color-text-muted: var(--color-muted-light);
+  --color-border: var(--color-border-light);
+  --color-accent-current: var(--color-accent);
+}
+
+/* Theme sombre */
+html[data-theme="sombre"] {
+  --color-bg: var(--color-surface-dark);
+  --color-card: var(--color-card-dark);
+  --color-text: var(--color-text-dark);
+  --color-text-muted: var(--color-muted-dark);
+  --color-border: var(--color-border-dark);
+  --color-accent-current: var(--color-accent-dark);
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  margin: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+}
+
+/* Spinner d'attente */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-accent-current);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
