@@ -16,6 +16,7 @@ export default function HomePage() {
   const [numTeams, setNumTeams] = useState(DEFAULT_NUM_TEAMS)
   const [services, setServices] = useState(DEFAULT_SERVICES.join(', '))
   const [deleteTarget, setDeleteTarget] = useState<Session | null>(null)
+  const [creating, setCreating] = useState(false)
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -25,12 +26,18 @@ export default function HomePage() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
-    const session = await createSession({
-      title: title || LABELS.workshopNameDefault,
-      numTeams,
-      services: services.split(',').map((s) => s.trim()).filter(Boolean),
-    })
-    navigate(`/session/${session.id}`)
+    if (creating) return
+    setCreating(true)
+    try {
+      const session = await createSession({
+        title: title || LABELS.workshopNameDefault,
+        numTeams,
+        services: services.split(',').map((s) => s.trim()).filter(Boolean),
+      })
+      navigate(`/session/${session.id}`)
+    } finally {
+      setCreating(false)
+    }
   }
 
   async function handleDelete() {
@@ -116,7 +123,9 @@ export default function HomePage() {
             className="mt-1 w-full rounded-lg border border-[var(--color-border)] bg-transparent px-3 py-2 text-sm"
           />
         </div>
-        <Button type="submit">{LABELS.createWorkshop}</Button>
+        <Button type="submit" disabled={creating}>
+          {creating ? 'Création…' : LABELS.createWorkshop}
+        </Button>
       </form>
 
       {/* Liste des sessions */}
