@@ -34,14 +34,8 @@ export default function AdminPage() {
   const showQr = viewMode === 'both' || viewMode === 'qr'
   const showTeams = viewMode === 'both' || viewMode === 'teams'
 
-  function toggleView(panel: 'qr' | 'teams') {
-    if (viewMode === 'both') {
-      setViewMode(panel === 'qr' ? 'teams' : 'qr')
-    } else if (viewMode === panel) {
-      setViewMode('both')
-    } else {
-      setViewMode(panel)
-    }
+  function setView(mode: ViewMode) {
+    setViewMode(mode)
   }
 
   async function handleCopyUrl() {
@@ -75,16 +69,23 @@ export default function AdminPage() {
 
         <div className="ml-auto flex items-center gap-2">
           <Button
-            variant={showQr ? 'primary' : 'secondary'}
+            variant={viewMode === 'qr' ? 'primary' : 'secondary'}
             className="text-xs"
-            onClick={() => toggleView('qr')}
+            onClick={() => setView('qr')}
           >
             QR
           </Button>
           <Button
-            variant={showTeams ? 'primary' : 'secondary'}
+            variant={viewMode === 'both' ? 'primary' : 'secondary'}
             className="text-xs"
-            onClick={() => toggleView('teams')}
+            onClick={() => setView('both')}
+          >
+            Les deux
+          </Button>
+          <Button
+            variant={viewMode === 'teams' ? 'primary' : 'secondary'}
+            className="text-xs"
+            onClick={() => setView('teams')}
           >
             Équipes
           </Button>
