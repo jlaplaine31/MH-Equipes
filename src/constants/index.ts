@@ -55,7 +55,7 @@ export const LABELS = {
   reset: 'Reset',
   editResponses: 'Modifier mes réponses',
   copilotLabel: 'Quel est votre niveau d\'utilisation de Copilot Chat ?',
-  copilotHelp: '0 = jamais utilisé, 5 = je l\'utilise tout le temps',
+  copilotHelp: '1 = jamais utilisé, 5 = je l\'utilise tout le temps',
   miaLabel: 'Quel est votre niveau d\'utilisation de Mia ?',
   serviceLabel: 'Quel est votre service ?',
   nameLabel: 'Votre prénom, nom ou pseudo',

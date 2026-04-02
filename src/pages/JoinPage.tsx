@@ -13,8 +13,8 @@ export default function JoinPage() {
   const navigate = useNavigate()
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
-  const [scoreCopilot, setScoreCopilot] = useState(0)
-  const [scoreMia, setScoreMia] = useState(0)
+  const [scoreCopilot, setScoreCopilot] = useState(1)
+  const [scoreMia, setScoreMia] = useState(1)
   const [service, setService] = useState('')
   const [name, setName] = useState('')
 

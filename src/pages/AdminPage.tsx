@@ -1,24 +1,22 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { QRCodeSVG } from 'qrcode.react'
+import * as XLSX from 'xlsx'
 import { useSessionData } from '../hooks/useSessionData'
 import { updateTeamColor, updateTeamTag } from '../services/teamService'
+import { createParticipant, deleteAllParticipants } from '../services/participantService'
 import { LABELS, MIN_TEAMS, MAX_TEAMS } from '../constants'
 import Button from '../components/ui/Button'
 import StatusBadge from '../components/ui/StatusBadge'
-import ParticipantPill from '../components/ui/ParticipantPill'
-import Counter from '../components/ui/Counter'
 import TeamGrid from '../components/teams/TeamGrid'
 import Modal from '../components/ui/Modal'
 
-type ViewMode = 'both' | 'qr' | 'teams'
-
 export default function AdminPage() {
   const { id } = useParams<{ id: string }>()
-  const { session, participants, teams, loading, rebalance, reset } = useSessionData(id)
-  const [viewMode, setViewMode] = useState<ViewMode>('both')
+  const { session, participants, teams, loading, rebalance, reset, refresh } = useSessionData(id)
   const [numTeamsInput, setNumTeamsInput] = useState<number | null>(null)
   const [showResetModal, setShowResetModal] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   if (loading || !session) {
     return (
@@ -29,18 +27,6 @@ export default function AdminPage() {
   }
 
   const effectiveNumTeams = numTeamsInput ?? session.numTeams
-  const joinUrl = `${window.location.origin}/MH-Equipes/join/${session.shareToken}`
-
-  const showQr = viewMode === 'both' || viewMode === 'qr'
-  const showTeams = viewMode === 'both' || viewMode === 'teams'
-
-  function setView(mode: ViewMode) {
-    setViewMode(mode)
-  }
-
-  async function handleCopyUrl() {
-    await navigator.clipboard.writeText(joinUrl)
-  }
 
   function handleColorChange(teamId: string, color: string) {
     updateTeamColor(teamId, color)
@@ -48,6 +34,47 @@ export default function AdminPage() {
 
   function handleTagChange(teamId: string, tag: string) {
     updateTeamTag(teamId, tag)
+  }
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !id) return
+
+    setImporting(true)
+    try {
+      const data = await file.arrayBuffer()
+      const workbook = XLSX.read(data)
+      const sheet = workbook.Sheets[workbook.SheetNames[0]]
+      const rows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1 })
+
+      // Skip header row
+      const dataRows = rows.slice(1).filter((row) => row.length >= 10 && row[9])
+
+      // Delete all existing participants
+      await deleteAllParticipants(id)
+
+      // Create new participants from file
+      for (const row of dataRows) {
+        const scoreCopilot = Math.min(5, Math.max(1, Number(row[6]) || 1))
+        const scoreMia = Math.min(5, Math.max(1, Number(row[7]) || 1))
+        const service = String(row[8] || '')
+        const name = String(row[9] || '')
+
+        await createParticipant({
+          sessionId: id,
+          name,
+          service,
+          scoreCopilot,
+          scoreMia,
+        })
+      }
+
+      await refresh()
+    } finally {
+      setImporting(false)
+      // Reset file input so the same file can be re-imported
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
   }
 
   return (
@@ -69,26 +96,20 @@ export default function AdminPage() {
 
         <div className="ml-auto flex items-center gap-2">
           <Button
-            variant={viewMode === 'qr' ? 'primary' : 'secondary'}
+            variant="secondary"
             className="text-xs"
-            onClick={() => setView('qr')}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
           >
-            QR
+            {importing ? 'Import...' : 'Importer'}
           </Button>
-          <Button
-            variant={viewMode === 'both' ? 'primary' : 'secondary'}
-            className="text-xs"
-            onClick={() => setView('both')}
-          >
-            Les deux
-          </Button>
-          <Button
-            variant={viewMode === 'teams' ? 'primary' : 'secondary'}
-            className="text-xs"
-            onClick={() => setView('teams')}
-          >
-            Équipes
-          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            className="hidden"
+            onChange={handleImport}
+          />
           <span className="text-xs text-[var(--color-text-muted)]">Nb:</span>
           <input
             type="number"
@@ -108,54 +129,12 @@ export default function AdminPage() {
       </header>
 
       {/* Main content */}
-      <main
-        className="flex-1 overflow-auto p-4"
-        style={{
-          display: 'grid',
-          gridTemplateColumns:
-            showQr && showTeams ? '1fr 2fr' : '1fr',
-          gap: '1rem',
-        }}
-      >
-        {/* QR Panel */}
-        {showQr && (
-          <div className="flex flex-col items-center gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-6">
-            <QRCodeSVG
-              value={joinUrl}
-              size={280}
-              fgColor="#1a1a1a"
-              bgColor="#ffffff"
-              level="M"
-            />
-            <button
-              onClick={handleCopyUrl}
-              className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-accent-current)] underline"
-            >
-              Copier le lien
-            </button>
-
-            {/* Compteur */}
-            <Counter value={participants.length} />
-
-            {/* Pills */}
-            <div className="flex flex-wrap gap-2 justify-center">
-              {participants.map((p) => (
-                <ParticipantPill key={p.id} participant={p} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Teams Panel */}
-        {showTeams && (
-          <div className="overflow-auto">
-            <TeamGrid
-              teams={teams}
-              onColorChange={handleColorChange}
-              onTagChange={handleTagChange}
-            />
-          </div>
-        )}
+      <main className="flex-1 overflow-auto p-4">
+        <TeamGrid
+          teams={teams}
+          onColorChange={handleColorChange}
+          onTagChange={handleTagChange}
+        />
       </main>
 
       {/* Reset modal */}

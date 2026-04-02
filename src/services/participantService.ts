@@ -1,6 +1,6 @@
 import type { Participant } from '../types'
 import { mockDb } from './mockData'
-import { isFlowConfigured, flowGet, flowPost, flowPatch } from './powerAutomateClient'
+import { isFlowConfigured, flowGet, flowPost, flowPatch, flowDelete } from './powerAutomateClient'
 import { TABLES, PARTICIPANT_COLS } from './dataverseSchema'
 
 const useMock = () => !isFlowConfigured() || (import.meta.env.VITE_USE_MOCK ?? 'true') === 'true'
@@ -55,8 +55,8 @@ export async function createParticipant(data: {
     const id = `p-${Date.now()}`
     const participant: Participant = {
       id, sessionId: data.sessionId, name: data.name, service: data.service,
-      scoreCopilot: Math.min(5, Math.max(0, data.scoreCopilot)),
-      scoreMia: Math.min(5, Math.max(0, data.scoreMia)),
+      scoreCopilot: Math.min(5, Math.max(1, data.scoreCopilot)),
+      scoreMia: Math.min(5, Math.max(1, data.scoreMia)),
       sessionToken, teamId: null, createdAt: new Date().toISOString(),
     }
     mockDb.participants.push(participant)
@@ -66,8 +66,8 @@ export async function createParticipant(data: {
   const body = {
     [PARTICIPANT_COLS.name]: data.name,
     [PARTICIPANT_COLS.service]: data.service,
-    [PARTICIPANT_COLS.scoreCopilot]: Math.min(5, Math.max(0, data.scoreCopilot)),
-    [PARTICIPANT_COLS.scoreMia]: Math.min(5, Math.max(0, data.scoreMia)),
+    [PARTICIPANT_COLS.scoreCopilot]: Math.min(5, Math.max(1, data.scoreCopilot)),
+    [PARTICIPANT_COLS.scoreMia]: Math.min(5, Math.max(1, data.scoreMia)),
     [PARTICIPANT_COLS.sessionToken]: sessionToken,
     'aaa_Session@odata.bind': `/${TABLES.sessions}(${data.sessionId})`,
   }
@@ -90,8 +90,8 @@ export async function updateParticipant(
   if (useMock()) {
     const participant = mockDb.participants.find((p) => p.id === id)
     if (!participant) return null
-    if (data.scoreCopilot !== undefined) data.scoreCopilot = Math.min(5, Math.max(0, data.scoreCopilot))
-    if (data.scoreMia !== undefined) data.scoreMia = Math.min(5, Math.max(0, data.scoreMia))
+    if (data.scoreCopilot !== undefined) data.scoreCopilot = Math.min(5, Math.max(1, data.scoreCopilot))
+    if (data.scoreMia !== undefined) data.scoreMia = Math.min(5, Math.max(1, data.scoreMia))
     Object.assign(participant, data)
     return participant
   }
@@ -100,8 +100,8 @@ export async function updateParticipant(
   const body: any = {}
   if (data.name !== undefined) body[PARTICIPANT_COLS.name] = data.name
   if (data.service !== undefined) body[PARTICIPANT_COLS.service] = data.service
-  if (data.scoreCopilot !== undefined) body[PARTICIPANT_COLS.scoreCopilot] = Math.min(5, Math.max(0, data.scoreCopilot))
-  if (data.scoreMia !== undefined) body[PARTICIPANT_COLS.scoreMia] = Math.min(5, Math.max(0, data.scoreMia))
+  if (data.scoreCopilot !== undefined) body[PARTICIPANT_COLS.scoreCopilot] = Math.min(5, Math.max(1, data.scoreCopilot))
+  if (data.scoreMia !== undefined) body[PARTICIPANT_COLS.scoreMia] = Math.min(5, Math.max(1, data.scoreMia))
 
   await flowPatch(`${TABLES.participants}(${id})`, body)
 
@@ -112,6 +112,20 @@ export async function updateParticipant(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const raw = resp as any
   return raw[PARTICIPANT_COLS.id] ? mapParticipant(raw) : null
+}
+
+export async function deleteParticipant(id: string): Promise<void> {
+  if (useMock()) {
+    const idx = mockDb.participants.findIndex((p) => p.id === id)
+    if (idx >= 0) mockDb.participants.splice(idx, 1)
+    return
+  }
+  await flowDelete(`${TABLES.participants}(${id})`)
+}
+
+export async function deleteAllParticipants(sessionId: string): Promise<void> {
+  const participants = await getParticipants(sessionId)
+  await Promise.all(participants.map((p) => deleteParticipant(p.id)))
 }
 
 // Helper to assign a participant to a team in Dataverse
